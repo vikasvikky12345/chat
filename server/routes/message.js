@@ -6,6 +6,7 @@ const router = express.Router();
 
 // Import the User model
 const User = require('../models/user');
+const { getReceiverSocketId, io } = require('../socket/socket');
 
 // Middleware to protect the route
 const protectRoute = async (req, res, next) => {
@@ -68,6 +69,10 @@ router.post("/send/:id",protectRoute, async (req, res) => {
         }
 
         await Promise.all([conversation.save(), newMessage.save()])
+        const receiverSocketId  = getReceiverSocketId(receiverId);
+        if(receiverSocketId){
+            io.to(receiverSocketId).emit("newMessage",newMessage);
+        }
         res.status(201).json(newMessage);
     } catch (error) {
         console.error("Error in sending routes:", error.message);
